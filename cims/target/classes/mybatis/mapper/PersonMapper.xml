@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="person">
+
+    <select id="queryByCount" resultType="long" parameterType="Map">
+        select count(1) from cims_person
+        <where>
+            <if test="null!=name and ''!=name">
+                name like concat ('%',#{name},'%')
+            </if>
+            <if test="null!=card and ''!=card">
+                and person_card = #{card}
+            </if>
+            <if test="null!=state and 0!=state">
+                and state = #{state}
+            </if>
+            <if test="null!=startDate and null!=endDate">
+                and started_date between #{startDate} and #{endDate}
+            </if>
+            <if test="null!=hotting">
+                and hotting = 1
+            </if>
+            <if test="null!=property">
+                and property = 1
+            </if>
+        </where>
+    </select>
+
+<!--    where - - if中的test的第一个null值得是key是否为null，第二个是判断value值是否为空-->
+    <select id="queryByPage" resultType="Person" parameterType="Map">
+        select id, name, person_card, state, grade, started_date, hotting, property, reasons from cims_person
+        <where>
+            <if test="null!=name and ''!=name">
+                name like concat('%',#{name},'%')
+            </if>
+            <if test="null!=card and ''!=card">
+                and person_card = #{card}
+            </if>
+            <if test="null!=state and 0!=state">
+                and state = #{state}
+            </if>
+            <if test="null!=startDate and null!=endDate">
+                and started_date between #{startDate} and #{endDate}
+            </if>
+            <if test="null!=hotting">
+                and hotting = 1
+            </if>
+            <if test="null!=property">
+                and property = 1
+            </if>
+
+        </where>
+        limit #{start},#{limit}
+    </select>
+
+    <select id="queryAll" resultType="Person">
+        select id,name,person_card,state,grade,started_date,hotting,property,reasons
+        from cims_person
+    </select>
+
+    <select id="queryById" parameterType="int" resultType="Person">
+        select id,name,person_card,state,grade,started_date,hotting,property,reasons
+        from cims_person where id = #{id}
+    </select>
+
+    <delete id="delete" parameterType="int">
+        delete from cims_person where id = #{id}
+    </delete>
+
+    <delete id="batch" parameterType="int">
+        delete from cims_person where id in
+            <foreach collection="array" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+
+    </delete>
+
+    <insert id="insert" parameterType="Person">
+        insert into cims_person (name, person_card, state, grade, started_date, hotting, property, reasons)
+                    value (#{name}, #{personCard}, #{state}, #{grade}, #{startedDate}, #{hotting}, #{property}, #{reasons})
+    </insert>
+
+    <update id="update" parameterType="Person">
+        update cims_person set name=#{name},person_card=#{personCard},state=#{state},grade=#{grade},started_date=#{startedDate},
+            hotting=#{hotting},property=#{property},reasons=#{reasons} where id = #{id}
+    </update>
+
+    <select id="queryCount" parameterType="String" resultType="int">
+        select count(1) from cims_person where person_card=#{card}
+    </select>
+
+    <select id="queryPersonBySubsidy" parameterType="int" resultType="Map">
+        select id,name,person_card as card from cims_person where
+            <choose>
+                <when test="type==1">
+                    hotting=1
+                </when>
+                <otherwise>
+                    property=1
+                </otherwise>
+            </choose>
+            and id not in
+            (select person_id from cims_subsidy where month=concat(year(now()),'-',lpad(month(now()),2,'0')) and type=#{type})
+    </select>
+
+    <select id="queryCountByMain">
+        select count(1) from cims_person
+        where concat(year(`current_date`),'-',month(`current_date`)) = concat(year(now()),'-',month(now()))
+    </select>
+
+</mapper>
